@@ -10,3 +10,10 @@ return Container(
                 ),
               ),
             );
+
+
+
+             return HomeWidgets(
+                          icon: item["icon"],
+                          text: item["text"],
+                        );

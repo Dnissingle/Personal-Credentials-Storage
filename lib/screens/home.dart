@@ -9,47 +9,63 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  int _currentIndex = 0;
+
   final List<Map<String, dynamic>> dashboardItems = [
-    {"icon": Icons.person, "text": "Personal Details"},
-    {"icon": Icons.phone_android, "text": "App Logins"},
+    {"icon": Icons.person, "text": "Personal Details","route": "/personalDetails"},
+    {"icon": Icons.phone_android, "text": "App Logins","route": "/appLogins"},
     {"icon": Icons.recent_actors, "text": "ID Cards"},
     {"icon": Icons.fact_check, "text": "Certificates"},
     {"icon": Icons.key, "text": "Authenticator"},
     {"icon": Icons.remember_me, "text": "Social Media"},
-    //{"icon": Icons.settings_applications, "text": "Driver License"},
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Credential Storage"),
+        title: const Text("Credential Storage"),
         centerTitle: true,
       ),
-      drawer: Drawer(),
-      body: Center(
+      drawer: const Drawer(),
+      body: Padding(
+        padding: const EdgeInsets.all(10.0),
         child: GridView.builder(
-          padding: const EdgeInsets.all(10.0),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            crossAxisSpacing: 5,
+            crossAxisSpacing: 10, // Adjusted for cleaner visual spacing
             mainAxisSpacing: 20,
           ),
           itemCount: dashboardItems.length,
           itemBuilder: (context, index) {
             final item = dashboardItems[index];
-            return HomeWidgets(
-              icon: item["icon"],
-              text: item["text"],
+           return GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context,
+                    item["route"],
+                    arguments: item["text"]
+                );
+              },
+              child: HomeWidgets(
+                icon: item["icon"],
+                text: item["text"],
+              ),
             );
-          }
+          },
         ),
       ),
-
-      bottomNavigationBar: BottomNavigationBar(items: [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
-      ],),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: "Settings"),
+        ],
+      ),
     );
   }
 }
