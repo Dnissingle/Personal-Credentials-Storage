@@ -177,7 +177,7 @@ class DetailsEditView extends StatelessWidget {
           controller: firstNameController,
           onCopy: onCopy,
           validator: (v) =>
-              (v == null || v.isEmpty) ? "First name cannot be empty" : null,
+          (v == null || v.isEmpty) ? "First name cannot be empty" : null,
         ),
         _buildBaseField(
           label: "Middle Name",
@@ -191,7 +191,7 @@ class DetailsEditView extends StatelessWidget {
           controller: lastNameController,
           onCopy: onCopy,
           validator: (v) =>
-              (v == null || v.isEmpty) ? "Last name cannot be empty" : null,
+          (v == null || v.isEmpty) ? "Last name cannot be empty" : null,
         ),
         _buildBaseField(
           label: "Email",
@@ -200,7 +200,7 @@ class DetailsEditView extends StatelessWidget {
           onCopy: onCopy,
           keyboardType: TextInputType.emailAddress,
           validator: (v) =>
-              (v == null || v.isEmpty) ? "Email cannot be empty" : null,
+          (v == null || v.isEmpty) ? "Email cannot be empty" : null,
         ),
         _buildBaseField(
           label: "Phone Number",
@@ -209,7 +209,7 @@ class DetailsEditView extends StatelessWidget {
           onCopy: onCopy,
           keyboardType: TextInputType.phone,
           validator: (v) =>
-              (v == null || v.isEmpty) ? "Phone number cannot be empty" : null,
+          (v == null || v.isEmpty) ? "Phone number cannot be empty" : null,
         ),
         _buildBaseField(
           label: "Address",
@@ -217,7 +217,7 @@ class DetailsEditView extends StatelessWidget {
           controller: addressController,
           onCopy: onCopy,
           validator: (v) =>
-              (v == null || v.isEmpty) ? "Address cannot be empty" : null,
+          (v == null || v.isEmpty) ? "Address cannot be empty" : null,
         ),
         _buildBaseField(
           label: "Date of Birth",
@@ -226,7 +226,7 @@ class DetailsEditView extends StatelessWidget {
           onCopy: onCopy,
           keyboardType: TextInputType.datetime,
           validator: (v) =>
-              (v == null || v.isEmpty) ? "Date of birth cannot be empty" : null,
+          (v == null || v.isEmpty) ? "Date of birth cannot be empty" : null,
         ),
       ],
     );
