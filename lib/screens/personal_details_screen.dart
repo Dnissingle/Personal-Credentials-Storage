@@ -1,15 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-void main() {
-  runApp(
-    const MaterialApp(
-      home: PersonalDetailsScreen(),
-      debugShowCheckedModeBanner: false,
-    ),
-  );
-}
-
 class PersonalDetailsScreen extends StatefulWidget {
   const PersonalDetailsScreen({super.key});
 
@@ -18,58 +9,132 @@ class PersonalDetailsScreen extends StatefulWidget {
 }
 
 class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  bool _isEditing = false;
+  int _selectedIndex = 0;
 
-  // Centralized controllers managing the text data state
-  final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _middleNameController = TextEditingController();
-  final TextEditingController _lastNameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _dobController = TextEditingController();
+  // 1. Hoist data variables up to the parent container
+  String firstName = "";
+  String lastName = "";
+  String middleName = "";
+  String dob = "";
+  String address = "";
+  String phone = "";
+  String gender = "";
+  String nationality = "";
+  String fatherName = "";
+  String motherName = "";
+  String email = "";
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  // 2. Callback function to let the edit page update parent state
+  void _updateDetails({
+    required String fName,
+    required String lName,
+    required String mName,
+    required String birthDate,
+    required String addr,
+    required String ph,
+    required String gen,
+    required String nat,
+    required String father,
+    required String mother,
+    required String mail,
+  }) {
+    setState(() {
+      firstName = fName;
+      lastName = lName;
+      middleName = mName;
+      dob = birthDate;
+      address = addr;
+      phone = ph;
+      gender = gen;
+      nationality = nat;
+      fatherName = father;
+      motherName = mother;
+      email = mail;
+      _selectedIndex = 0; // Automatically switch back to the View tab on save
+    });
+  }
 
   @override
-  void dispose() {
-    _firstNameController.dispose();
-    _middleNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _dobController.dispose();
-    super.dispose();
-  }
+  Widget build(BuildContext context) {
+    // 3. Build widgets dynamically to supply current variable states
+    final List<Widget> widgetOptions = <Widget>[
+      PersonalDetailsViewPage(
+        firstName: firstName,
+        lastName: lastName,
+        middleName: middleName,
+        dob: dob,
+        address: address,
+        phone: phone,
+        gender: gender,
+        nationality: nationality,
+        fatherName: fatherName,
+        motherName: motherName,
+        email: email,
+      ),
+      PersonalDetailsEditPage(
+        // Pass current values to initialize the text fields when switching tabs
+        initialFirstName: firstName,
+        initialLastName: lastName,
+        initialMiddleName: middleName,
+        initialDob: dob,
+        initialAddress: address,
+        initialPhone: phone,
+        initialGender: gender,
+        initialNationality: nationality,
+        initialFatherName: fatherName,
+        initialMotherName: motherName,
+        initialEmail: email,
+        onSave: _updateDetails,
+      ),
+    ];
 
-  void _saveData() {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-    _formKey.currentState!.save();
-
-    setState(() {
-      _isEditing = false; // Swap back to clean display view
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Data successfully saved locally!")),
+    return Scaffold(
+      body: Center(child: widgetOptions.elementAt(_selectedIndex)),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.view_list), label: "View"),
+          BottomNavigationBarItem(icon: Icon(Icons.edit), label: "Edit"),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+      ),
     );
   }
+}
 
-  void _copyToClipboard(String text, String fieldName) {
-    if (text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Cannot copy an empty $fieldName!")),
-      );
-      return;
-    }
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("$fieldName copied to clipboard!")));
-  }
+class PersonalDetailsViewPage extends StatelessWidget {
+  final String firstName;
+  final String lastName;
+  final String middleName;
+  final String dob;
+  final String address;
+  final String phone;
+  final String gender;
+  final String nationality;
+  final String fatherName;
+  final String motherName;
+  final String email;
 
+  const PersonalDetailsViewPage({
+    super.key,
+    required this.firstName,
+    required this.lastName,
+    required this.middleName,
+    required this.dob,
+    required this.address,
+    required this.phone,
+    required this.gender,
+    required this.nationality,
+    required this.fatherName,
+    required this.motherName,
+    required this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,64 +142,28 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       appBar: AppBar(
         title: const Text("Personal Details"),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(_isEditing ? Icons.cancel_rounded : Icons.edit_rounded),
-            tooltip: _isEditing ? "Cancel" : "Edit Details",
-            onPressed: () {
-              setState(() {
-                if (_isEditing) {
-                  _formKey.currentState?.reset(); // Rollback un-saved inputs
-                }
-                _isEditing = !_isEditing;
-              });
-            },
-          ),
-        ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Clean conditional switching between our two isolated display/edit widgets
-                if (_isEditing)
-                  DetailsEditView(
-                    firstNameController: _firstNameController,
-                    middleNameController: _middleNameController,
-                    lastNameController: _lastNameController,
-                    emailController: _emailController,
-                    phoneController: _phoneController,
-                    addressController: _addressController,
-                    dobController: _dobController,
-                    onCopy: _copyToClipboard,
-                  )
-                else
-                  DetailsDisplayView(
-                    firstNameController: _firstNameController,
-                    middleNameController: _middleNameController,
-                    lastNameController: _lastNameController,
-                    emailController: _emailController,
-                    phoneController: _phoneController,
-                    addressController: _addressController,
-                    dobController: _dobController,
-                    onCopy: _copyToClipboard,
-                  ),
-                const SizedBox(height: 25),
-                if (_isEditing)
-                  ElevatedButton.icon(
-                    onPressed: _saveData,
-                    icon: const Icon(Icons.check_circle),
-                    label: const Text("Save Changes"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 40,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
+                _buildDetailRow(context, "Full Name", "$firstName $middleName $lastName".replaceAll(RegExp(r'\s+'), ' ')),
+                _buildDetailRow(context, "Date of Birth", dob),
+                _buildDetailRow(context, "Gender", gender),
+                _buildDetailRow(context, "Nationality", nationality),
+                const Divider(indent: 16, endIndent: 16),
+                _buildDetailRow(context, "Email", email),
+                _buildDetailRow(context, "Phone", phone),
+                _buildDetailRow(context, "Address", address),
+                const Divider(indent: 16, endIndent: 16),
+                _buildDetailRow(context, "Father's Name", fatherName),
+                _buildDetailRow(context, "Mother's Name", motherName),
               ],
             ),
           ),
@@ -142,233 +171,271 @@ class _PersonalDetailsScreenState extends State<PersonalDetailsScreen> {
       ),
     );
   }
-}
 
-// WIDGET 1: Mode for modifying data (displays all options with validation styling)
-class DetailsEditView extends StatelessWidget {
-  final TextEditingController firstNameController;
-  final TextEditingController middleNameController;
-  final TextEditingController lastNameController;
-  final TextEditingController emailController;
-  final TextEditingController phoneController;
-  final TextEditingController addressController;
-  final TextEditingController dobController;
-  final Function(String, String) onCopy;
+  // 2. Updated row builder to include context and a copy action icon button
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
+    final String displayValue = value.trim().isEmpty ? "Not Provided" : value.trim();
+    final bool isCopyable = value.trim().isNotEmpty;
 
-  const DetailsEditView({
-    super.key,
-    required this.firstNameController,
-    required this.middleNameController,
-    required this.lastNameController,
-    required this.emailController,
-    required this.phoneController,
-    required this.addressController,
-    required this.dobController,
-    required this.onCopy,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildBaseField(
-          label: "First Name",
-          hint: "Enter your first name",
-          controller: firstNameController,
-          onCopy: onCopy,
-          validator: (v) =>
-              (v == null || v.isEmpty) ? "First name cannot be empty" : null,
-        ),
-        _buildBaseField(
-          label: "Middle Name",
-          hint: "Enter your middle name",
-          controller: middleNameController,
-          onCopy: onCopy,
-        ),
-        _buildBaseField(
-          label: "Last Name",
-          hint: "Enter your last name",
-          controller: lastNameController,
-          onCopy: onCopy,
-          validator: (v) =>
-              (v == null || v.isEmpty) ? "Last name cannot be empty" : null,
-        ),
-        _buildBaseField(
-          label: "Email",
-          hint: "Enter your email",
-          controller: emailController,
-          onCopy: onCopy,
-          keyboardType: TextInputType.emailAddress,
-          validator: (v) =>
-              (v == null || v.isEmpty) ? "Email cannot be empty" : null,
-        ),
-        _buildBaseField(
-          label: "Phone Number",
-          hint: "Enter your phone number",
-          controller: phoneController,
-          onCopy: onCopy,
-          keyboardType: TextInputType.phone,
-          validator: (v) =>
-              (v == null || v.isEmpty) ? "Phone number cannot be empty" : null,
-        ),
-        _buildBaseField(
-          label: "Address",
-          hint: "Enter your address",
-          controller: addressController,
-          onCopy: onCopy,
-          validator: (v) =>
-              (v == null || v.isEmpty) ? "Address cannot be empty" : null,
-        ),
-        _buildBaseField(
-          label: "Date of Birth",
-          hint: "Enter your date of birth",
-          controller: dobController,
-          onCopy: onCopy,
-          keyboardType: TextInputType.datetime,
-          validator: (v) =>
-              (v == null || v.isEmpty) ? "Date of birth cannot be empty" : null,
-        ),
-      ],
-    );
-  }
-}
-
-// WIDGET 2: Mode for showcasing data (only displays fields containing data)
-class DetailsDisplayView extends StatelessWidget {
-  final TextEditingController firstNameController;
-  final TextEditingController middleNameController;
-  final TextEditingController lastNameController;
-  final TextEditingController emailController;
-  final TextEditingController phoneController;
-  final TextEditingController addressController;
-  final TextEditingController dobController;
-  final Function(String, String) onCopy;
-
-  const DetailsDisplayView({
-    super.key,
-    required this.firstNameController,
-    required this.middleNameController,
-    required this.lastNameController,
-    required this.emailController,
-    required this.phoneController,
-    required this.addressController,
-    required this.dobController,
-    required this.onCopy,
-  });
-
-  bool _hasNoData(TextEditingController controller) {
-    final text = controller.text.trim();
-    return text.isEmpty || text == "0";
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        if (!_hasNoData(firstNameController))
-          _buildBaseField(
-            label: "First Name",
-            hint: "",
-            controller: firstNameController,
-            onCopy: onCopy,
-            readOnly: true,
-          ),
-        if (!_hasNoData(middleNameController))
-          _buildBaseField(
-            label: "Middle Name",
-            hint: "",
-            controller: middleNameController,
-            onCopy: onCopy,
-            readOnly: true,
-          ),
-        if (!_hasNoData(lastNameController))
-          _buildBaseField(
-            label: "Last Name",
-            hint: "",
-            controller: lastNameController,
-            onCopy: onCopy,
-            readOnly: true,
-          ),
-        if (!_hasNoData(emailController))
-          _buildBaseField(
-            label: "Email",
-            hint: "",
-            controller: emailController,
-            onCopy: onCopy,
-            readOnly: true,
-          ),
-        if (!_hasNoData(phoneController))
-          _buildBaseField(
-            label: "Phone Number",
-            hint: "",
-            controller: phoneController,
-            onCopy: onCopy,
-            readOnly: true,
-          ),
-        if (!_hasNoData(addressController))
-          _buildBaseField(
-            label: "Address",
-            hint: "",
-            controller: addressController,
-            onCopy: onCopy,
-            readOnly: true,
-          ),
-        if (!_hasNoData(dobController))
-          _buildBaseField(
-            label: "Date of Birth",
-            hint: "",
-            controller: dobController,
-            onCopy: onCopy,
-            readOnly: true,
-          ),
-
-        // Show fallback hint message if absolutely all fields evaluate to empty string states
-        if (_hasNoData(firstNameController) &&
-            _hasNoData(middleNameController) &&
-            _hasNoData(lastNameController) &&
-            _hasNoData(emailController) &&
-            _hasNoData(phoneController) &&
-            _hasNoData(addressController) &&
-            _hasNoData(dobController))
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 40.0),
-            child: Text(
-              "No details provided yet. Click edit to begin.",
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-// Global UI engine shared across both subcomponents
-Widget _buildBaseField({
-  required String label,
-  required String hint,
-  required TextEditingController controller,
-  required Function(String, String) onCopy,
-  FormFieldValidator? validator,
-  TextInputType keyboardType = TextInputType.text,
-  bool readOnly = false,
-}) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 16.0),
-    child: TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
-      readOnly: readOnly,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        border: const OutlineInputBorder(),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.copy_rounded, size: 20),
-          tooltip: "Copy $label",
-          onPressed: () => onCopy(controller.text, label),
+    return ListTile(
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 2.0),
+        child: Text(
+          displayValue,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
       ),
-    ),
-  );
+      // Appends an action icon button at the trailing end of the list element row
+      trailing: isCopyable
+          ? IconButton(
+        icon: const Icon(Icons.copy, size: 20, color: Colors.blueGrey),
+        tooltip: 'Copy $label',
+        onPressed: () async {
+          // Copies the targeted data value string onto the device's system clipboard
+          await Clipboard.setData(ClipboardData(text: displayValue));
+
+          // Displays a brief snackbar confirmation feedback to the end user
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('$label copied to clipboard!'),
+                duration: const Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+      )
+          : null, // Hides the copy action asset icon if the text field string is blank
+    );
+  }
+}
+class PersonalDetailsEditPage extends StatefulWidget {
+  final String initialFirstName;
+  final String initialLastName;
+  final String initialMiddleName;
+  final String initialDob;
+  final String initialAddress;
+  final String initialPhone;
+  final String initialGender;
+  final String initialNationality;
+  final String initialFatherName;
+  final String initialMotherName;
+  final String initialEmail;
+  final Function({
+    required String fName,
+    required String lName,
+    required String mName,
+    required String birthDate,
+    required String addr,
+    required String ph,
+    required String gen,
+    required String nat,
+    required String father,
+    required String mother,
+    required String mail,
+  })
+  onSave;
+
+  const PersonalDetailsEditPage({
+    super.key,
+    required this.initialFirstName,
+    required this.initialLastName,
+    required this.initialMiddleName,
+    required this.initialDob,
+    required this.initialAddress,
+    required this.initialPhone,
+    required this.initialGender,
+    required this.initialNationality,
+    required this.initialFatherName,
+    required this.initialMotherName,
+    required this.initialEmail,
+    required this.onSave,
+  });
+
+  @override
+  State<PersonalDetailsEditPage> createState() =>
+      _PersonalDetailsEditPageState();
+}
+
+class _PersonalDetailsEditPageState extends State<PersonalDetailsEditPage> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  late String firstName;
+  late String lastName;
+  late String middleName;
+  late String dob;
+  late String address;
+  late String phone;
+  late String gender;
+  late String nationality;
+  late String fatherName;
+  late String motherName;
+  late String email;
+
+  @override
+  void initState() {
+    super.initState();
+    // Load existing values into editing variables
+    firstName = widget.initialFirstName;
+    lastName = widget.initialLastName;
+    middleName = widget.initialMiddleName;
+    dob = widget.initialDob;
+    address = widget.initialAddress;
+    phone = widget.initialPhone;
+    gender = widget.initialGender;
+    nationality = widget.initialNationality;
+    fatherName = widget.initialFatherName;
+    motherName = widget.initialMotherName;
+    email = widget.initialEmail;
+  }
+
+  void _save() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      // Execute the callback function to send the data upstream
+      widget.onSave(
+        fName: firstName,
+        lName: lastName,
+        mName: middleName,
+        birthDate: dob,
+        addr: address,
+        ph: phone,
+        gen: gender,
+        nat: nationality,
+        father: fatherName,
+        mother: motherName,
+        mail: email,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Edit Personal Details"),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Expanded(
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  children: <Widget>[
+                    TextFormField(
+                      initialValue: firstName,
+                      decoration: const InputDecoration(
+                        labelText: "First Name",
+                        hintText: "Enter your first name",
+                      ),
+                      onSaved: (value) => firstName = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: lastName,
+                      decoration: const InputDecoration(
+                        labelText: "Last Name",
+                        hintText: "Enter your last name",
+                      ),
+                      onSaved: (value) => lastName = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: middleName,
+                      decoration: const InputDecoration(
+                        labelText: "Middle Name",
+                        hintText: "Enter your middle name",
+                      ),
+                      onSaved: (value) => middleName = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: dob,
+                      decoration: const InputDecoration(
+                        labelText: "Date of Birth",
+                        hintText: "Enter your date of birth",
+                      ),
+                      onSaved: (value) => dob = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: address,
+                      decoration: const InputDecoration(
+                        labelText: "Address",
+                        hintText: "Enter your address",
+                      ),
+                      onSaved: (value) => address = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: phone,
+                      decoration: const InputDecoration(
+                        labelText: "Phone Number",
+                        hintText: "Enter your phone number",
+                      ),
+                      keyboardType: TextInputType.phone,
+                      onSaved: (value) => phone = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: nationality,
+                      decoration: const InputDecoration(
+                        labelText: "Nationality",
+                        hintText: "Enter your nationality",
+                      ),
+                      onSaved: (value) => nationality = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: gender,
+                      decoration: const InputDecoration(
+                        labelText: "Gender",
+                        hintText: "Enter your gender",
+                      ),
+                      onSaved: (value) => gender = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: fatherName,
+                      decoration: const InputDecoration(
+                        labelText: "Father's Name",
+                        hintText: "Enter your father's name",
+                      ),
+                      onSaved: (value) => fatherName = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: motherName,
+                      decoration: const InputDecoration(
+                        labelText: "Mother's Name",
+                        hintText: "Enter your mother's name",
+                      ),
+                      onSaved: (value) => motherName = value ?? "",
+                    ),
+                    TextFormField(
+                      initialValue: email,
+                      decoration: const InputDecoration(
+                        labelText: "Email",
+                        hintText: "Enter your email",
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      onSaved: (value) => email = value ?? "",
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _save,
+                child: const Text("Save"),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
